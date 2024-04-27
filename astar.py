@@ -1,21 +1,18 @@
 from typing import Callable
 from heapq import heappop, heappush
+from copy import deepcopy
 from utils import *
 
 
-def is_final_uctp(state : State, constraints : Constraint) -> bool:
-    for subject, students in constraints.specs[SUBJECTS].items():
-        if state.assigned_students[subject] < students:
-            return False
-        
-    return True
+def is_final_uctp(state : State) -> bool:
+    return sum(state.remaining_students.values()) == 0
 
-# (zi, interval, sala) -> (materie, prof)
+
 def check_hard(entry : Entry, state : State) -> bool:
     if entry.get_key() in state.coverage:
         return False
     
-    if state.hours.get(entry.prof, 0) >= 7:
+    if state.hours.get(entry.prof, 0) > 7:
         return False
     
     return True
@@ -34,8 +31,8 @@ def check_soft(entry : Entry, constraints : Constraint) -> bool:
 def create_neigh(state : State, entry : Entry, students : int) -> State:
     neigh = deepcopy(state)
     neigh.coverage[entry.get_key()] = entry.get_value()
-    neigh.assigned_students[entry.subject] = neigh.assigned_students.get(entry.subject, 0) + students
     neigh.hours[entry.prof] = neigh.hours.get(entry.prof, 0) + 1
+    neigh.remaining_students[entry.subject] = max(neigh.remaining_students[entry.subject] - students, 0)
 
     return neigh
 
@@ -57,25 +54,46 @@ def get_neighbours_uctp(state : State, constraints : Constraint) -> list:
     return neigh
 
 
-def heuristic_uctp(state : State):
-    pass
+def heuristic_uctp_helper(state : State, constraints : Constraint) -> float:
+    assignable_students = {}
+    for d in constraints.specs[DAYS]:
+        for h in constraints.specs[INTERVALS]:
+            for r in constraints.specs[ROOMS]:
+                if (d, h, r) not in state.coverage.keys():
+                    for s in constraints.specs[ROOMS][r][SUBJECTS]:
+                        assignable_students[s] = assignable_students.get(s, 0) + constraints.specs[ROOMS][r][CAPACITY]
+
+    bad_max = 0
+    for sub, assignable in assignable_students.items():
+        to_assign = state.remaining_students[sub]
+        bad_max += to_assign / assignable
+
+    return bad_max / len(assignable_students.values())
+
+
+def heuristic_uctp(state : State, constraints : Constraint) -> float:
+    f_students = sum(state.remaining_students.values()) / state.total_students
+    f_rooms = heuristic_uctp_helper(state, constraints)
+
+    if f_students == 0:
+        return 0
+    
+    return f_students + f_rooms
 
 
 def astar(start : State, h : Callable, neighbours : Callable, is_final : Callable, constraints : Constraint):
+    num_states = 0
+
     frontier = []
-    heappush(frontier, (0 + h(start), start))
+    heappush(frontier, (h(start, constraints), start))
     
-    discovered = {start: (None, 0)}
-
     while frontier:
-        nod_crt = heappop(frontier)
-        if is_final(nod_crt[1]):
-            break
+        current = heappop(frontier)
+        if is_final(current[1]):
+            print(num_states)
+            return current[1]
 
-        next_cost = discovered[nod_crt[1]][1] + 1
-        for n in neighbours(nod_crt[1], constraints):
-            if n not in discovered or discovered[n][1] > next_cost:
-                discovered[n] = (nod_crt[1], next_cost)
-                heappush(frontier, (next_cost + h(n), n))
-
-    return None
+        neigh = neighbours(current[1], constraints)
+        num_states += len(neigh)
+        for n in neigh:
+            heappush(frontier, (h(n, constraints), n))

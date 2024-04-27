@@ -5,7 +5,10 @@ from astar import *
 
 
 def astar_helper(constraints: Constraint) -> None:
-   pass 
+   total_students = sum(constraints.specs[SUBJECTS].values())
+   initial = State(total_students, constraints)
+
+   astar(initial, heuristic_uctp, get_neighbours_uctp, is_final_uctp, constraints)
 
 
 def hc_helper(constraints: Constraint) -> None:
@@ -24,7 +27,6 @@ if __name__ == "__main__":
         preferences = parse_soft_constraints(constraints)
 
         c = Constraint(constraints, preferences)
-    
         if args.run == "astar":
             astar_helper(c)
         elif args.run == "hc":

@@ -1,12 +1,19 @@
-from copy import deepcopy
 import yaml
 
 
 class State:
-    def __init__(self):
+    def __init__(self, total_students : int, constraints : 'Constraint'):
         self.coverage = {}
         self.hours = {}
-        self.assigned_students = {}
+        self.remaining_students = {}
+        self.total_students = total_students
+
+        for sub, stud in constraints.specs[SUBJECTS].items():
+            self.remaining_students[sub] = stud
+
+
+    def __lt__(self, other):
+        return sum(self.remaining_students.values()) < sum(other.remaining_students.values())
 
 
 class Entry:
@@ -17,9 +24,11 @@ class Entry:
         self.subject = subject
         self.prof = prof
 
+
     def get_key(self):
         return (self.day, self.hour, self.room)
     
+
     def get_value(self):
         return (self.subject, self.prof)
 
