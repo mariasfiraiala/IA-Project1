@@ -1,19 +1,12 @@
 from copy import deepcopy
 import yaml
-import argparse
-import sys
+
 
 class State:
     def __init__(self):
         self.coverage = {}
         self.hours = {}
         self.assigned_students = {}
-
-    def __init__(self, state, entry, students):
-        self = deepcopy(state)
-        self.coverage[entry.get_key()] = entry.get_value()
-        self.assigned_students[entry.subject] = self.assigned_students.get(entry.subject, 0) + students
-        self.hours[entry.prof] = self.hours.get(entry.prof, 0) + 1
 
 
 class Entry:
@@ -60,20 +53,26 @@ def read_yaml_file(file_path : str) -> dict:
         return yaml.safe_load(file)
 
 
-def parse_soft_constraints(constraints):
+def parse_soft_constraints(constraints : dict) -> dict:
     preferances = {}
 
     for prof in constraints[PROFESSORS]:
         for const in constraints[PROFESSORS][prof][CONSTRAINTS]:
             if "!" in const:
                 if "-" in const:
-                    preferances.setdefault(prof, {}).setdefault(UNPREFERRED_INTERVAL, []).append(const[1:])
+                    x, y = int(const[1:].split("-")[0]), int(const[1:].split("-")[1])
+                    intervals = [(x, y) if y - x <= 2 else (i, i + 2) for i in range(x, y, 2)]
+
+                    preferances.setdefault(prof, {}).setdefault(UNPREFERRED_INTERVAL, []).extend(intervals)
                 else:
                     preferances.setdefault(prof, {}).setdefault(UNPREFERRED_DAY, []).append(const[1:])
 
             else:
                 if "-" in const:
-                    preferances.setdefault(prof, {}).setdefault(PREFERRED_INTERVAL, []).append(const)
+                    x, y = int(const.split("-")[0]), int(const.split("-")[1])
+                    intervals = [(x, y) if y - x <= 2 else (i, i + 2) for i in range(x, y, 2)]
+
+                    preferances.setdefault(prof, {}).setdefault(PREFERRED_INTERVAL, []).extend(intervals)
                 else:
                     preferances.setdefault(prof, {}).setdefault(PREFERRED_DAY, []).append(const)
 

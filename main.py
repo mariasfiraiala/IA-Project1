@@ -1,13 +1,14 @@
 from argparse import ArgumentParser
 from pathlib import Path
 from utils import *
+from astar import *
 
 
-def astar_helper(constraints: Constraint):
-    pass
+def astar_helper(constraints: Constraint) -> None:
+   pass 
 
 
-def hc_helper(constraints: Constraint):
+def hc_helper(constraints: Constraint) -> None:
     pass
 
 

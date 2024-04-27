@@ -1,59 +1,67 @@
-from utils import *
+from typing import Callable
 from heapq import heappop, heappush
-from collections import defaultdict
-from functools import reduce
+from utils import *
 
 
-def is_final_uctp(state, constraints):
-    for subject, students in constraints[SUBJECTS].items():
+def is_final_uctp(state : State, constraints : Constraint) -> bool:
+    for subject, students in constraints.specs[SUBJECTS].items():
         if state.assigned_students[subject] < students:
-            return 0
+            return False
         
-    return 1
+    return True
 
 # (zi, interval, sala) -> (materie, prof)
-def check_hard(entry, state):
-    if entry.get_key() in state:
-        return 0
+def check_hard(entry : Entry, state : State) -> bool:
+    if entry.get_key() in state.coverage:
+        return False
     
-    if state.hours[entry.prof] >= 7:
-        return 0
+    if state.hours.get(entry.prof, 0) >= 7:
+        return False
     
-    return 1
+    return True
     
 
-def check_soft(entry, preferances):
-    if entry.i in preferances[entry.prof][UNPREFERRED_DAY]:
-        return 0
+def check_soft(entry : Entry, constraints : Constraint) -> bool:
+    if entry.day in constraints.preferences[entry.prof].get(UNPREFERRED_DAY, []):
+        return False
 
-    if entry.h in preferances[entry.prof][UNPREFERRED_INTERVAL]:
-        return 0
+    if entry.hour in constraints.preferences[entry.prof].get(UNPREFERRED_INTERVAL, []):
+        return False
 
-    return 1
+    return True
 
 
-def get_neighbours_uctp(state, constraints):
-    neigh = []
-
-    for d in constraints[DAYS]:
-        for h in constraints[INTERVALS]:
-            for r in constraints[ROOMS]:
-                for s in constraints[ROOMS][r][SUBJECTS]:
-                    for p in constraints[PROFESSORS].keys():
-                        if constraints[PROFESSORS][p][SUBJECTS] == s:
-                            entry = Entry(d, h, r, s, p)
-
-                            if check_hard(entry, state) and check_soft(entry, constraints.preferences):
-                                neigh.append(State(state, entry, constraints[ROOMS][r][CAPACITY]))
+def create_neigh(state : State, entry : Entry, students : int) -> State:
+    neigh = deepcopy(state)
+    neigh.coverage[entry.get_key()] = entry.get_value()
+    neigh.assigned_students[entry.subject] = neigh.assigned_students.get(entry.subject, 0) + students
+    neigh.hours[entry.prof] = neigh.hours.get(entry.prof, 0) + 1
 
     return neigh
 
 
-def heuristic_uctp(state):
+def get_neighbours_uctp(state : State, constraints : Constraint) -> list:
+    neigh = []
+
+    for d in constraints.specs[DAYS]:
+        for h in constraints.specs[INTERVALS]:
+            for r in constraints.specs[ROOMS]:
+                for s in constraints.specs[ROOMS][r][SUBJECTS]:
+                    for p in constraints.specs[PROFESSORS].keys():
+                        if s in constraints.specs[PROFESSORS][p][SUBJECTS]:
+                            entry = Entry(d, h, r, s, p)
+
+                            if check_hard(entry, state) and check_soft(entry, constraints):
+                                neigh.append(create_neigh(state, entry, constraints.specs[ROOMS][r][CAPACITY]))
+
+    return neigh
+
+
+def heuristic_uctp(state : State):
     pass
 
 
-def astar(start, h, neighbours, is_final, constraints):
+def astar(start : State, h : Callable, neighbours : Callable, is_final : Callable, constraints : Constraint):
     frontier = []
     heappush(frontier, (0 + h(start), start))
     
