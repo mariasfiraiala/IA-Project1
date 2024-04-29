@@ -1,5 +1,3 @@
-import yaml
-import argparse
 import sys
 from utils import read_yaml_file, get_profs_initials, pretty_print_timetable
 
@@ -47,7 +45,7 @@ def get_timetable(timetable_specs : dict, output_name : str, debug_flag : bool =
     '''
     Pe baza specificațiilor din fișierul de intrare, se reprezintă intern orarul din fișierul de ieșire.
     '''
-    timetable = {day : {eval(interval) : {} for interval in timetable_specs[INTERVALE]} for day in timetable_specs[ZILE]}
+    timetable = {day : {interval : {} for interval in timetable_specs[INTERVALE]} for day in timetable_specs[ZILE]}
 
     _, initials_to_prof = get_profs_initials(timetable_specs[PROFESORI])
     
@@ -210,7 +208,7 @@ if __name__ == '__main__':
     name = sys.argv[1]
 
     input_name = f'inputs/{name}.yaml'
-    output_name = f'outputs/{name}.txt'
+    output_name = f'my-outputs/{name}.txt'
 
     timetable_specs = read_yaml_file(input_name)
 
