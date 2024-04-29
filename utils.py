@@ -17,7 +17,7 @@ class State:
 
 
 class Entry:
-    def __init__(self, day, hour, room, subject, prof):
+    def __init__(self, day : str, hour : tuple, room : str, subject : str, prof : str):
         self.day = day
         self.hour = hour
         self.room = room
@@ -34,7 +34,7 @@ class Entry:
 
 
 class Constraint:
-    def __init__(self, specs, preferences):
+    def __init__(self, specs : dict, preferences : dict):
         self.specs = specs
         self.preferences = preferences
 
@@ -95,17 +95,16 @@ def parse_soft_constraints(constraints : dict) -> dict:
 
 def coverage_to_timetable(coverage : dict, constraints : Constraint) -> dict:
     timetable = {}
-
-    for (d, h, r), (s, p) in coverage.items():
-        timetable.setdefault(d, {}).setdefault(h, {}).setdefault(r, {})
-        timetable[d][h][r] = (p, s)
-
     for d in constraints.specs[DAYS]:
         for h in constraints.specs[INTERVALS]:
             for r in constraints.specs[ROOMS]:
                 if (d, h, r) not in coverage.keys():
-                    timetable.setdefault(d, {}).setdefault(h, {}).setdefault(r, {})
+                    timetable.setdefault(d, {}).setdefault(h, {})
                     timetable[d][h][r] = None
+
+    for (d, h, r), (s, p) in coverage.items():
+        timetable.setdefault(d, {}).setdefault(h, {})
+        timetable[d][h][r] = (p, s)
 
     return timetable
 

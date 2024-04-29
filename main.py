@@ -1,7 +1,8 @@
 from argparse import ArgumentParser
-from pathlib import Path
 from utils import *
-from astar import *
+from algo import *
+from astar import astar
+from hc import hc
 
 
 def astar_helper(constraints: Constraint) -> None:
@@ -13,7 +14,11 @@ def astar_helper(constraints: Constraint) -> None:
 
 
 def hc_helper(constraints: Constraint) -> None:
-    pass
+    total_students = sum(constraints.specs[SUBJECTS].values())
+    initial = State(total_students, constraints)
+
+    final = hc(initial, heuristic_uctp, get_neighbours_uctp, is_final_uctp, constraints)
+    return final.coverage
 
 
 if __name__ == "__main__":
