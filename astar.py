@@ -9,10 +9,14 @@ def is_final_uctp(state : State) -> bool:
 
 
 def check_hard(entry : Entry, state : State) -> bool:
-    if entry.get_key() in state.coverage:
+    if entry.get_key() in state.coverage.keys():
         return False
+
+    for (d, h, _), (_, p) in state.coverage.items():
+        if d == entry.day and h == entry.hour and entry.prof == p:
+            return False
     
-    if state.hours.get(entry.prof, 0) > 7:
+    if state.hours.get(entry.prof, 1) >= 7:
         return False
     
     return True
