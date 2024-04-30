@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from time import process_time
 from utils import *
 from algo import *
 from astar import astar
@@ -35,9 +36,21 @@ if __name__ == "__main__":
     coverage = None
 
     if args.run == "astar":
+        print(f'{args.inpath} - astar')
+
+        start = process_time()
         coverage = astar_helper(c)
+        end = process_time()
+
+        print(end - start)
     elif args.run == "hc":
+        print(f'{args.inpath} - hc')
+
+        start = process_time()
         coverage = hc_helper(c)
+        end = process_time()
+
+        print(end - start)
 
     timetable = coverage_to_timetable(coverage, c)
     write_timetable(pretty_print_timetable(timetable, args.inpath), args.outpath)
